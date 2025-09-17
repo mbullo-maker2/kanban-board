@@ -5,6 +5,7 @@ A modern, responsive kanban board built with **Next.js 15**, **TypeScript**, **T
 ![Kanban Board](https://img.shields.io/badge/Next.js-15.5.3-black?logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178c6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38b2ac?logo=tailwind-css&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
 
 ## ✨ Features
 
