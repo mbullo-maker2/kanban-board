@@ -1,0 +1,124 @@
+KANBAN APP - UX STRUCTURE TREE
+=====================================
+
+📋 Kanban Application
+│
+├── 🏠 Header/Navigation Bar
+│   ├── App Title/Logo
+│   ├── User Profile/Avatar
+│   └── Settings/Menu Button
+│
+├── 🎯 Main Dashboard
+│   │
+│   ├── 📊 Board Container
+│   │   │
+│   │   ├── 🆕 NEW Column
+│   │   │   ├── Column Header
+│   │   │   │   ├── Title: "New"
+│   │   │   │   ├── Task Count Badge
+│   │   │   │   └── Add Task Button (+)
+│   │   │   │
+│   │   │   └── Task Cards Container
+│   │   │       ├── Task Card 1
+│   │   │       │   ├── Task Title
+│   │   │       │   ├── Task Description
+│   │   │       │   ├── Priority Indicator
+│   │   │       │   ├── Due Date
+│   │   │       │   └── Action Menu (...)
+│   │   │       │
+│   │   │       ├── Task Card 2
+│   │   │       └── [Additional Tasks...]
+│   │   │
+│   │   ├── 📚 LEARNING Column
+│   │   │   ├── Column Header
+│   │   │   │   ├── Title: "Learning"
+│   │   │   │   ├── Task Count Badge
+│   │   │   │   └── Progress Indicator
+│   │   │   │
+│   │   │   └── Task Cards Container
+│   │   │       ├── Task Card 1
+│   │   │       │   ├── Task Title
+│   │   │       │   ├── Progress Bar
+│   │   │       │   ├── Time Spent
+│   │   │       │   ├── Notes/Comments
+│   │   │       │   └── Action Menu (...)
+│   │   │       │
+│   │   │       ├── Task Card 2
+│   │   │       └── [Additional Tasks...]
+│   │   │
+│   │   └── ✅ COMPLETED Column
+│   │       ├── Column Header
+│   │       │   ├── Title: "Completed"
+│   │       │   ├── Task Count Badge
+│   │       │   └── Archive Button
+│   │       │
+│   │       └── Task Cards Container
+│   │           ├── Task Card 1
+│   │           │   ├── Task Title (strikethrough)
+│   │           │   ├── Completion Date
+│   │           │   ├── Total Time Spent
+│   │           │   └── Action Menu (...)
+│   │           │
+│   │           ├── Task Card 2
+│   │           └── [Additional Tasks...]
+│   │
+│   └── 🛠️ Controls & Actions
+│       ├── Filter Options
+│       │   ├── Priority Filter
+│       │   ├── Date Range Filter
+│       │   └── Search Bar
+│       │
+│       └── Bulk Actions
+│           ├── Select All
+│           ├── Delete Selected
+│           └── Export Data
+│
+├── 📝 Task Creation Modal/Form
+│   ├── Task Title Input
+│   ├── Task Description Textarea
+│   ├── Priority Selection (Low/Medium/High)
+│   ├── Due Date Picker
+│   ├── Category/Tags Input
+│   ├── Cancel Button
+│   └── Save Button
+│
+├── ✏️ Task Edit Modal/Form
+│   ├── All Creation Fields (pre-populated)
+│   ├── Status Change Dropdown
+│   ├── Time Tracking
+│   ├── Comments/Notes Section
+│   ├── Delete Button
+│   ├── Cancel Button
+│   └── Update Button
+│
+└── 📱 Mobile Responsive Layout
+    ├── Collapsible Sidebar
+    ├── Swipeable Columns
+    ├── Touch-friendly Drag & Drop
+    └── Floating Action Button (Add Task)
+
+
+INTERACTION PATTERNS
+====================
+
+🔄 Drag & Drop Flow:
+NEW → LEARNING → COMPLETED
+
+📱 Mobile Gestures:
+- Swipe left/right: Navigate columns
+- Long press: Select task
+- Swipe up: Quick actions menu
+- Pull down: Refresh board
+
+🎨 Visual Hierarchy:
+- NEW: Blue accent (#3B82F6)
+- LEARNING: Orange accent (#F59E0B)  
+- COMPLETED: Green accent (#10B981)
+
+📊 Data Flow:
+Task Creation → NEW Column → User moves to LEARNING → Auto-tracking begins → User moves to COMPLETED → Archive option
+
+🔔 Notifications:
+- Task due date reminders
+- Long-running tasks in LEARNING
+- Weekly progress summary
