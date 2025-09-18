@@ -1,6 +1,7 @@
 import React from 'react'
-import { Search, Plus, Settings, User, Moon, Sun } from 'lucide-react'
+import { Search, Plus, Settings, User, Moon, Sun, BarChart2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -26,13 +27,17 @@ interface FloatingNavbarProps {
   onSearch?: (query: string) => void
   searchQuery?: string
   className?: string
+  onExportImport?: () => void
+  onSoundSettings?: () => void
 }
 
 export function FloatingNavbar({ 
   onAddTask, 
   onSearch, 
   searchQuery, 
-  className 
+  className,
+  onExportImport,
+  onSoundSettings 
 }: FloatingNavbarProps) {
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
   const { theme, toggleTheme } = useTheme()
@@ -80,6 +85,12 @@ export function FloatingNavbar({
           Add Task
         </Button>
 
+        {/* Analytics Link */}
+        <Link href="/analytics">
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <BarChart2 className="h-4 w-4" />
+          </Button>
+        </Link>
 
         {/* Theme Toggle */}
         <Button 
@@ -110,10 +121,21 @@ export function FloatingNavbar({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuItem>Export Board</DropdownMenuItem>
-            <DropdownMenuItem>Import Tasks</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/analytics" className="cursor-pointer">
+                <BarChart2 className="h-4 w-4 mr-2" />
+                Analytics
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Dark Mode</DropdownMenuItem>
+            <DropdownMenuItem onClick={onExportImport}>
+              Export/Import
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={toggleTheme}>
+              {theme === 'dark' ? 'Light' : 'Dark'} Mode
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onSoundSettings}>Sound Settings</DropdownMenuItem>
             <DropdownMenuItem>Preferences</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -184,8 +206,18 @@ export function FloatingNavbar({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={8}>
-                <DropdownMenuItem>Dark Mode</DropdownMenuItem>
-                <DropdownMenuItem>Export Board</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/analytics" className="cursor-pointer">
+                    <BarChart2 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={toggleTheme}>
+                  {theme === 'dark' ? 'Light' : 'Dark'} Mode
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onSoundSettings}>Sound Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={onExportImport}>Export/Import</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Sign out</DropdownMenuItem>

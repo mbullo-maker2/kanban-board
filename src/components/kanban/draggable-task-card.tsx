@@ -11,13 +11,15 @@ interface DraggableTaskCardProps {
   onEdit?: (task: Task) => void
   onDelete?: (taskId: string) => void
   onStatusChange?: (taskId: string, newStatus: Task['status']) => void
+  onTimeUpdate?: (taskId: string, minutes: number) => void
 }
 
 export function DraggableTaskCard({ 
   task, 
   onEdit, 
   onDelete, 
-  onStatusChange 
+  onStatusChange,
+  onTimeUpdate 
 }: DraggableTaskCardProps) {
   const {
     attributes,
@@ -49,6 +51,7 @@ export function DraggableTaskCard({
         onEdit={onEdit}
         onDelete={onDelete}
         onStatusChange={onStatusChange}
+        onTimeUpdate={onTimeUpdate}
       />
     </div>
   )
