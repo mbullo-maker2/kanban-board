@@ -1,5 +1,6 @@
 import React from 'react'
-import { Search, Plus, Settings, User, Filter } from 'lucide-react'
+import { Search, Plus, Settings, User, Moon, Sun } from 'lucide-react'
+import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -18,6 +19,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/contexts/theme-context'
 
 interface FloatingNavbarProps {
   onAddTask?: () => void
@@ -33,6 +35,7 @@ export function FloatingNavbar({
   className 
 }: FloatingNavbarProps) {
   const [isSearchOpen, setIsSearchOpen] = React.useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <>
@@ -47,7 +50,7 @@ export function FloatingNavbar({
         {/* Search Button */}
         <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full" data-search-trigger>
               <Search className="h-4 w-4" />
             </Button>
           </DialogTrigger>
@@ -77,22 +80,27 @@ export function FloatingNavbar({
           Add Task
         </Button>
 
-        {/* Filter Button */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Filter className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={8}>
-            <DropdownMenuItem>All Tasks</DropdownMenuItem>
-            <DropdownMenuItem>High Priority</DropdownMenuItem>
-            <DropdownMenuItem>Due Today</DropdownMenuItem>
-            <DropdownMenuItem>Overdue</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Reset Filters</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+        {/* Theme Toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="rounded-full"
+          onClick={toggleTheme}
+        >
+          <motion.div
+            key={theme}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", stiffness: 200, damping: 15 }}
+          >
+            {theme === 'light' ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </motion.div>
+        </Button>
 
         {/* Settings Dropdown */}
         <DropdownMenu>

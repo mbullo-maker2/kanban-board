@@ -7,6 +7,14 @@ import { SimpleHeader } from './simple-header'
 import { FloatingNavbar } from './floating-navbar'
 import { DroppableColumn } from './droppable-column'
 import { TaskForm } from './task-form'
+import { CompletionCelebration } from './completion-celebration'
+import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog'
+import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
+import { useHotkeys } from 'react-hotkeys-hook'
+import { useTheme } from '@/contexts/theme-context'
+import { useFilter } from '@/contexts/filter-context'
+import { FilterPanel } from './filter-panel'
+import { motion } from 'framer-motion'
 import { 
   DndContext,
   DragOverlay,
@@ -28,6 +36,12 @@ export function KanbanBoard() {
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [selectedColumn, setSelectedColumn] = useState<TaskStatus>('new')
+  const { toggleTheme } = useTheme()
+  const { filters } = useFilter()
 
   // DnD sensors
   const sensors = useSensors(
@@ -44,17 +58,94 @@ export function KanbanBoard() {
     })
   )
 
-  // Filter tasks based on search query
-  const filteredTasks = useMemo(() => {
-    if (!searchQuery) return tasks
+  // Get all available tags
+  const availableTags = useMemo(() => {
+    const tagSet = new Set<string>()
+    tasks.forEach(task => task.tags.forEach(tag => tagSet.add(tag)))
+    return Array.from(tagSet).sort()
+  }, [tasks])
 
-    const query = searchQuery.toLowerCase()
-    return tasks.filter(task => 
-      task.title.toLowerCase().includes(query) ||
-      task.description.toLowerCase().includes(query) ||
-      task.tags.some(tag => tag.toLowerCase().includes(query))
-    )
-  }, [tasks, searchQuery])
+  // Filter and sort tasks
+  const filteredTasks = useMemo(() => {
+    let filtered = [...tasks]
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(task => 
+        task.title.toLowerCase().includes(query) ||
+        task.description.toLowerCase().includes(query) ||
+        task.tags.some(tag => tag.toLowerCase().includes(query))
+      )
+    }
+
+    // Apply quick filters
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    switch (filters.filterBy) {
+      case 'today':
+        filtered = filtered.filter(task => {
+          if (!task.dueDate) return false
+          const dueDate = new Date(task.dueDate)
+          dueDate.setHours(0, 0, 0, 0)
+          return dueDate.getTime() === today.getTime()
+        })
+        break
+      case 'overdue':
+        filtered = filtered.filter(task => {
+          if (!task.dueDate || task.status === 'completed') return false
+          return new Date(task.dueDate) < today
+        })
+        break
+      case 'high-priority':
+        filtered = filtered.filter(task => task.priority === 'high')
+        break
+      case 'has-notes':
+        filtered = filtered.filter(task => task.notes && task.notes.trim() !== '')
+        break
+    }
+
+    // Apply priority filter
+    if (filters.priorityFilter !== 'all') {
+      filtered = filtered.filter(task => task.priority === filters.priorityFilter)
+    }
+
+    // Apply tag filter
+    if (filters.tagFilter.length > 0) {
+      filtered = filtered.filter(task => 
+        filters.tagFilter.some(tag => task.tags.includes(tag))
+      )
+    }
+
+    // Apply sorting
+    switch (filters.sortBy) {
+      case 'oldest':
+        filtered.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+        break
+      case 'priority':
+        const priorityOrder = { high: 3, medium: 2, low: 1 }
+        filtered.sort((a, b) => priorityOrder[b.priority] - priorityOrder[a.priority])
+        break
+      case 'dueDate':
+        filtered.sort((a, b) => {
+          if (!a.dueDate && !b.dueDate) return 0
+          if (!a.dueDate) return 1
+          if (!b.dueDate) return -1
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+        })
+        break
+      case 'alphabetical':
+        filtered.sort((a, b) => a.title.localeCompare(b.title))
+        break
+      case 'newest':
+      default:
+        filtered.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        break
+    }
+
+    return filtered
+  }, [tasks, searchQuery, filters])
 
   // Group tasks by status
   const tasksByStatus = useMemo(() => {
@@ -131,6 +222,8 @@ export function KanbanBoard() {
   }
 
   const handleTaskStatusChange = (taskId: string, newStatus: TaskStatus) => {
+    const previousTask = tasks.find(t => t.id === taskId)
+    
     setTasks(prev => prev.map(task => 
       task.id === taskId 
         ? {
@@ -140,6 +233,11 @@ export function KanbanBoard() {
           }
         : task
     ))
+    
+    // Show celebration when a task is marked as completed
+    if (previousTask && previousTask.status !== 'completed' && newStatus === 'completed') {
+      setShowCelebration(true)
+    }
   }
 
   const handleArchiveCompleted = () => {
@@ -181,6 +279,7 @@ export function KanbanBoard() {
     if (!activeTask || activeTask.status === overColumnId) return
 
     // Update task status when moving to different column
+    const previousStatus = activeTask.status
     setTasks(prev => prev.map(task => 
       task.id === activeTaskId 
         ? {
@@ -190,6 +289,11 @@ export function KanbanBoard() {
           }
         : task
     ))
+    
+    // Show celebration when dragging to completed
+    if (previousStatus !== 'completed' && overColumnId === 'completed') {
+      setShowCelebration(true)
+    }
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -230,6 +334,60 @@ export function KanbanBoard() {
   const totalTasks = tasks.length
   const completedTasks = tasks.filter(task => task.status === 'completed').length
 
+  // Keyboard shortcuts
+  useHotkeys('shift+/', () => setShowKeyboardShortcuts(true), { enableOnFormTags: false })
+
+  useKeyboardShortcuts({
+    onAddTask: handleAddTask,
+    onSearch: () => {
+      const searchButton = document.querySelector('[data-search-trigger]') as HTMLElement
+      searchButton?.click()
+    },
+    onToggleTheme: toggleTheme,
+    onNavigateColumn: (direction) => {
+      const columns: TaskStatus[] = ['new', 'learning', 'completed']
+      const currentIndex = columns.indexOf(selectedColumn)
+      if (direction === 'left' && currentIndex > 0) {
+        setSelectedColumn(columns[currentIndex - 1])
+      } else if (direction === 'right' && currentIndex < columns.length - 1) {
+        setSelectedColumn(columns[currentIndex + 1])
+      }
+    },
+    onSelectTask: (direction) => {
+      const columnTasks = tasksByStatus[selectedColumn]
+      if (columnTasks.length === 0) return
+      
+      const currentIndex = selectedTaskId 
+        ? columnTasks.findIndex(t => t.id === selectedTaskId)
+        : -1
+        
+      if (direction === 'up' && currentIndex > 0) {
+        setSelectedTaskId(columnTasks[currentIndex - 1].id)
+      } else if (direction === 'down' && (currentIndex < columnTasks.length - 1 || currentIndex === -1)) {
+        setSelectedTaskId(columnTasks[currentIndex + 1].id)
+      }
+    },
+    onDeleteTask: () => {
+      if (selectedTaskId) {
+        handleDeleteTask(selectedTaskId)
+        setSelectedTaskId(null)
+      }
+    },
+    onEditTask: () => {
+      if (selectedTaskId) {
+        const task = tasks.find(t => t.id === selectedTaskId)
+        if (task) handleEditTask(task)
+      }
+    },
+    onCompleteTask: () => {
+      if (selectedTaskId) {
+        handleTaskStatusChange(selectedTaskId, 'completed')
+        setSelectedTaskId(null)
+      }
+    },
+    onArchive: handleArchiveCompleted,
+  })
+
   return (
     <DndContext
       sensors={sensors}
@@ -242,6 +400,7 @@ export function KanbanBoard() {
         <SimpleHeader 
           totalTasks={totalTasks}
           completedTasks={completedTasks}
+          availableTags={availableTags}
         />
         
         <main className="flex-1 overflow-hidden pt-20 md:pt-24 pb-20 md:pb-24">
@@ -283,33 +442,90 @@ export function KanbanBoard() {
           mode={formMode}
         />
 
-        <DragOverlay dropAnimation={{
-          duration: 500,
-          easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
-        }}>
+        <DragOverlay 
+          dropAnimation={{
+            duration: 500,
+            easing: 'cubic-bezier(0.18, 0.67, 0.6, 1.22)',
+          }}
+          modifiers={[
+            // Add custom modifier for smoother drag
+            {
+              active: {
+                onDragStart: () => {
+                  document.body.style.cursor = 'grabbing'
+                },
+                onDragEnd: () => {
+                  document.body.style.cursor = ''
+                }
+              }
+            }
+          ]}
+        >
           {activeTask ? (
-            <div className="drag-overlay">
-              <div className="bg-card border rounded-xl p-4 shadow-2xl backdrop-blur-sm">
-                <div className="font-semibold text-sm mb-1">{activeTask.title}</div>
-                {activeTask.description && (
-                  <div className="text-xs text-muted-foreground line-clamp-2">
-                    {activeTask.description}
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                    {activeTask.priority}
-                  </div>
-                  {activeTask.tags.slice(0, 2).map((tag) => (
-                    <div key={tag} className="text-xs px-2 py-1 bg-secondary rounded-full">
-                      {tag}
+            <motion.div 
+              className="drag-overlay"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            >
+              <motion.div 
+                className="bg-card/95 backdrop-blur-md border-2 border-primary/20 rounded-xl p-4 shadow-2xl"
+                animate={{
+                  rotate: [0, -2, 2, -2, 0],
+                  scale: [1, 1.02, 1],
+                }}
+                transition={{
+                  duration: 0.5,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }}
+              >
+                <div className="relative">
+                  <motion.div
+                    className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-xl blur-lg"
+                    animate={{
+                      scale: [1, 1.05, 1],
+                      opacity: [0.5, 0.8, 0.5]
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatType: "reverse"
+                    }}
+                  />
+                  <div className="relative">
+                    <div className="font-semibold text-sm mb-1">{activeTask.title}</div>
+                    {activeTask.description && (
+                      <div className="text-xs text-muted-foreground line-clamp-2">
+                        {activeTask.description}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+                        {activeTask.priority}
+                      </div>
+                      {activeTask.tags.slice(0, 2).map((tag) => (
+                        <div key={tag} className="text-xs px-2 py-1 bg-secondary rounded-full">
+                          {tag}
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           ) : null}
         </DragOverlay>
+
+        <CompletionCelebration 
+          show={showCelebration} 
+          onComplete={() => setShowCelebration(false)}
+        />
+
+        <KeyboardShortcutsDialog
+          open={showKeyboardShortcuts}
+          onOpenChange={setShowKeyboardShortcuts}
+        />
       </div>
     </DndContext>
   )

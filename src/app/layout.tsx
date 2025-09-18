@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { ThemeProvider } from "@/contexts/theme-context";
+import { FilterProvider } from "@/contexts/filter-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,9 +14,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="antialiased">
-        {children}
+        <ThemeProvider>
+          <FilterProvider>
+            {children}
+          </FilterProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

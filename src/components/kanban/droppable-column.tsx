@@ -4,6 +4,7 @@ import {
   SortableContext, 
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Task, TaskStatus, COLUMN_CONFIG } from '@/types/kanban'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -61,9 +62,16 @@ export function DroppableColumn({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-lg">{config.title}</h2>
-            <Badge variant="secondary" className="text-xs">
-              {tasks.length}
-            </Badge>
+            <motion.div
+              key={tasks.length}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 500, damping: 25 }}
+            >
+              <Badge variant="secondary" className="text-xs">
+                {tasks.length}
+              </Badge>
+            </motion.div>
           </div>
           
           <div className="flex items-center gap-1">
@@ -133,15 +141,30 @@ export function DroppableColumn({
           </div>
         ) : (
           <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
-            {tasks.map((task) => (
-              <DraggableTaskCard
-                key={task.id}
-                task={task}
-                onEdit={onEditTask}
-                onDelete={onDeleteTask}
-                onStatusChange={onTaskStatusChange}
-              />
-            ))}
+            <AnimatePresence mode="popLayout">
+              {tasks.map((task, index) => (
+                <motion.div
+                  key={task.id}
+                  layout
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ 
+                    delay: index * 0.05,
+                    duration: 0.3,
+                    layout: { type: "spring", stiffness: 300, damping: 30 }
+                  }}
+                  className="stagger-item"
+                >
+                  <DraggableTaskCard
+                    task={task}
+                    onEdit={onEditTask}
+                    onDelete={onDeleteTask}
+                    onStatusChange={onTaskStatusChange}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </SortableContext>
         )}
       </div>
