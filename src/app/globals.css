@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  /* Default light theme - will be overridden by theme context */
   --background: oklch(0.9582 0.0152 90.2357);
   --foreground: oklch(0.3760 0.0225 64.3434);
   --card: oklch(0.9914 0.0098 87.4695);
@@ -48,12 +49,13 @@
   --tracking-normal: 0em;
   --spacing: 0.23rem;
   
-  /* Kanban column colors */
+  /* Kanban column colors - will be overridden by theme context */
   --kanban-new: oklch(0.6180 0.0778 65.5444);
   --kanban-learning: oklch(0.7264 0.0581 66.6967);
   --kanban-completed: oklch(0.4851 0.0570 72.6827);
 }
 
+/* Dark theme - will be overridden by theme context for non-dark themes */
 .dark {
   --background: oklch(0.2747 0.0139 57.6523);
   --foreground: oklch(0.9239 0.0190 83.0636);
@@ -100,7 +102,7 @@
   --shadow-xl: 2px 3px 5px 0px hsl(28 13% 20% / 0.12), 2px 8px 10px -1px hsl(28 13% 20% / 0.12);
   --shadow-2xl: 2px 3px 5px 0px hsl(28 13% 20% / 0.30);
   
-  /* Kanban column colors for dark mode */
+  /* Kanban column colors for dark mode - will be overridden by theme context */
   --kanban-new: oklch(0.7264 0.0581 66.6967);
   --kanban-learning: oklch(0.6777 0.0624 64.7755);
   --kanban-completed: oklch(0.5604 0.0624 68.5805);

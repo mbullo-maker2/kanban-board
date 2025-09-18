@@ -73,7 +73,7 @@ export function KanbanBoard() {
   const [showSoundSettings, setShowSoundSettings] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [selectedColumn, setSelectedColumn] = useState<TaskStatus>('new')
-  const { toggleTheme } = useTheme()
+  const { theme } = useTheme()
   const { filters } = useFilter()
   const { playSound } = useSound()
 
@@ -394,7 +394,10 @@ export function KanbanBoard() {
       const searchButton = document.querySelector('[data-search-trigger]') as HTMLElement
       searchButton?.click()
     },
-    onToggleTheme: toggleTheme,
+    onToggleTheme: () => {
+      // Theme toggle is now handled by the theme selector component
+      // This is kept for keyboard shortcut compatibility but does nothing
+    },
     onNavigateColumn: (direction) => {
       const columns: TaskStatus[] = ['new', 'learning', 'completed']
       const currentIndex = columns.indexOf(selectedColumn)
