@@ -1,15 +1,20 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { Task, TaskStatus, COLUMN_CONFIG } from '@/types/kanban'
 import { mockTasks, generateMockTask } from '@/lib/mock-data'
+import { useLocalStorage } from '@/hooks/use-local-storage'
+import { STORAGE_KEY, serializeTasks, deserializeTasks, migrateTaskData } from '@/lib/storage'
 import { SimpleHeader } from './simple-header'
 import { FloatingNavbar } from './floating-navbar'
 import { DroppableColumn } from './droppable-column'
 import { TaskForm } from './task-form'
 import { CompletionCelebration } from './completion-celebration'
 import { KeyboardShortcutsDialog } from './keyboard-shortcuts-dialog'
+import { ExportImportDialog } from './export-import-dialog'
+import { SoundSettingsDialog } from './sound-settings-dialog'
 import { useKeyboardShortcuts } from '@/hooks/use-keyboard-shortcuts'
+import { useSound } from '@/hooks/use-sound'
 import { useHotkeys } from 'react-hotkeys-hook'
 import { useTheme } from '@/contexts/theme-context'
 import { useFilter } from '@/contexts/filter-context'
@@ -30,18 +35,47 @@ import {
 } from '@dnd-kit/core'
 
 export function KanbanBoard() {
-  const [tasks, setTasks] = useState<Task[]>(mockTasks)
+  // Use local storage for tasks with mock data as initial value
+  const [storedTasks, setStoredTasks] = useLocalStorage<Task[]>(
+    STORAGE_KEY,
+    mockTasks,
+    {
+      serializer: serializeTasks,
+      deserializer: deserializeTasks,
+    }
+  )
+  
+  // Initialize tasks with stored data, applying any necessary migrations
+  const [tasks, setTasksState] = useState<Task[]>(() => migrateTaskData(storedTasks))
   const [searchQuery, setSearchQuery] = useState('')
+  
+  // Wrapper for setTasks that also updates local storage
+  const setTasks = (newTasks: Task[] | ((prev: Task[]) => Task[])) => {
+    setTasksState(newTasks)
+    if (typeof newTasks === 'function') {
+      setStoredTasks((prev) => newTasks(prev))
+    } else {
+      setStoredTasks(newTasks)
+    }
+  }
+  
+  // Sync tasks with storage when they change
+  useEffect(() => {
+    setStoredTasks(tasks)
+  }, [tasks, setStoredTasks])
   const [isTaskFormOpen, setIsTaskFormOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [formMode, setFormMode] = useState<'create' | 'edit'>('create')
   const [activeTask, setActiveTask] = useState<Task | null>(null)
   const [showCelebration, setShowCelebration] = useState(false)
   const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [showExportImport, setShowExportImport] = useState(false)
+  const [showSoundSettings, setShowSoundSettings] = useState(false)
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [selectedColumn, setSelectedColumn] = useState<TaskStatus>('new')
   const { toggleTheme } = useTheme()
   const { filters } = useFilter()
+  const { playSound } = useSound()
 
   // DnD sensors
   const sensors = useSensors(
@@ -200,6 +234,7 @@ export function KanbanBoard() {
         ...taskData,
       }
       setTasks(prev => [...prev, newTask])
+      playSound('taskCreate')
     } else if (editingTask) {
       setTasks(prev => prev.map(task => 
         task.id === editingTask.id 
@@ -219,6 +254,7 @@ export function KanbanBoard() {
 
   const handleDeleteTask = (taskId: string) => {
     setTasks(prev => prev.filter(task => task.id !== taskId))
+    playSound('taskDelete')
   }
 
   const handleTaskStatusChange = (taskId: string, newStatus: TaskStatus) => {
@@ -237,11 +273,26 @@ export function KanbanBoard() {
     // Show celebration when a task is marked as completed
     if (previousTask && previousTask.status !== 'completed' && newStatus === 'completed') {
       setShowCelebration(true)
+      playSound('taskComplete')
+    } else if (previousTask && previousTask.status !== newStatus) {
+      playSound('taskMove')
     }
+  }
+
+  const handleTimeUpdate = (taskId: string, minutes: number) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId 
+        ? { ...task, timeSpent: minutes }
+        : task
+    ))
   }
 
   const handleArchiveCompleted = () => {
     setTasks(prev => prev.filter(task => task.status !== 'completed'))
+  }
+
+  const handleImportTasks = (importedTasks: Task[]) => {
+    setTasks(importedTasks)
   }
 
   // Drag and Drop handlers
@@ -421,6 +472,7 @@ export function KanbanBoard() {
                   onEditTask={handleEditTask}
                   onDeleteTask={handleDeleteTask}
                   onTaskStatusChange={handleTaskStatusChange}
+                  onTimeUpdate={handleTimeUpdate}
                   onArchive={status === 'completed' ? handleArchiveCompleted : undefined}
                 />
               </div>
@@ -432,6 +484,8 @@ export function KanbanBoard() {
           onAddTask={handleAddTask}
           onSearch={setSearchQuery}
           searchQuery={searchQuery}
+          onExportImport={() => setShowExportImport(true)}
+          onSoundSettings={() => setShowSoundSettings(true)}
         />
 
         <TaskForm
@@ -525,6 +579,18 @@ export function KanbanBoard() {
         <KeyboardShortcutsDialog
           open={showKeyboardShortcuts}
           onOpenChange={setShowKeyboardShortcuts}
+        />
+
+        <ExportImportDialog
+          open={showExportImport}
+          onOpenChange={setShowExportImport}
+          tasks={tasks}
+          onImport={handleImportTasks}
+        />
+
+        <SoundSettingsDialog
+          open={showSoundSettings}
+          onOpenChange={setShowSoundSettings}
         />
       </div>
     </DndContext>

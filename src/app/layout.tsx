@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { FilterProvider } from "@/contexts/filter-context";
+import { TimeTrackingProvider } from "@/contexts/time-tracking-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,7 +19,9 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider>
           <FilterProvider>
-            {children}
+            <TimeTrackingProvider>
+              {children}
+            </TimeTrackingProvider>
           </FilterProvider>
         </ThemeProvider>
       </body>

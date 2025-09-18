@@ -22,12 +22,14 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { TimeTracker } from './time-tracker'
 
 interface TaskCardProps {
   task: Task
   onEdit?: (task: Task) => void
   onDelete?: (taskId: string) => void
   onStatusChange?: (taskId: string, newStatus: Task['status']) => void
+  onTimeUpdate?: (taskId: string, minutes: number) => void
 }
 
 const getPriorityIcon = (priority: TaskPriority) => {
@@ -52,7 +54,7 @@ const getPriorityVariant = (priority: TaskPriority): "default" | "secondary" | "
   }
 }
 
-export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardProps) {
+export function TaskCard({ task, onEdit, onDelete, onStatusChange, onTimeUpdate }: TaskCardProps) {
   const formatTimeSpent = (minutes: number) => {
     if (minutes === 0) return '0 min'
     const hours = Math.floor(minutes / 60)
@@ -164,6 +166,16 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
             ))}
           </div>
 
+          {/* Time Tracker for active tasks */}
+          {task.status !== 'completed' && (
+            <TimeTracker
+              taskId={task.id}
+              currentTimeSpent={task.timeSpent}
+              onTimeUpdate={(minutes) => onTimeUpdate?.(task.id, minutes)}
+              compact
+            />
+          )}
+
           {/* Progress Bar for Learning */}
           {task.status === 'learning' && (
             <motion.div 
@@ -173,15 +185,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
               transition={{ duration: 0.3 }}
             >
               <Progress value={getProgress()} className="h-2" />
-              <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                >
-                  <Clock className="h-3 w-3" />
-                </motion.div>
-                {formatTimeSpent(task.timeSpent)}
-              </div>
             </motion.div>
           )}
 

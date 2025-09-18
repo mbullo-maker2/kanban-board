@@ -20,6 +20,7 @@ interface DroppableColumnProps {
   onEditTask?: (task: Task) => void
   onDeleteTask?: (taskId: string) => void
   onTaskStatusChange?: (taskId: string, newStatus: TaskStatus) => void
+  onTimeUpdate?: (taskId: string, minutes: number) => void
   onArchive?: () => void
 }
 
@@ -30,6 +31,7 @@ export function DroppableColumn({
   onEditTask, 
   onDeleteTask, 
   onTaskStatusChange,
+  onTimeUpdate,
   onArchive 
 }: DroppableColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
@@ -161,6 +163,7 @@ export function DroppableColumn({
                     onEdit={onEditTask}
                     onDelete={onDeleteTask}
                     onStatusChange={onTaskStatusChange}
+                    onTimeUpdate={onTimeUpdate}
                   />
                 </motion.div>
               ))}
