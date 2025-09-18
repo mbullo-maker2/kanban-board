@@ -1,5 +1,6 @@
 import React from 'react'
 import { format } from 'date-fns'
+import { motion } from 'framer-motion'
 import { 
   Calendar, 
   Clock, 
@@ -68,11 +69,32 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
   }
 
   return (
-    <Card className={cn(
-      "transition-all duration-200 hover:shadow-md cursor-pointer",
-      task.status === 'completed' && "opacity-75"
-    )}>
-      <CardHeader className="pb-2">
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      whileHover={{ scale: 1.02, y: -2 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{
+        layout: { type: "spring", stiffness: 300, damping: 30 },
+        scale: { type: "spring", stiffness: 400, damping: 17 }
+      }}
+    >
+      <Card className={cn(
+        "task-card cursor-pointer overflow-hidden",
+        task.status === 'completed' && "opacity-75"
+      )}>
+        <motion.div
+          initial={false}
+          animate={{
+            borderTopColor: task.status === 'completed' ? 'var(--chart-3)' : 
+                           task.status === 'learning' ? 'var(--chart-2)' : 'var(--chart-1)',
+          }}
+          transition={{ duration: 0.3 }}
+          className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent"
+        />
+        <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <CardTitle className={cn(
             "text-sm font-medium leading-4",
@@ -115,9 +137,15 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
           </DropdownMenu>
         </div>
         {task.description && (
-          <CardDescription className="text-xs">
-            {task.description}
-          </CardDescription>
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            transition={{ duration: 0.2 }}
+          >
+            <CardDescription className="text-xs">
+              {task.description}
+            </CardDescription>
+          </motion.div>
         )}
       </CardHeader>
       
@@ -138,13 +166,23 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
 
           {/* Progress Bar for Learning */}
           {task.status === 'learning' && (
-            <div className="space-y-1">
+            <motion.div 
+              className="space-y-1"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <Progress value={getProgress()} className="h-2" />
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  <Clock className="h-3 w-3" />
+                </motion.div>
                 {formatTimeSpent(task.timeSpent)}
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* Time tracking for completed tasks */}
@@ -185,5 +223,6 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange }: TaskCardPro
         </div>
       </CardFooter>
     </Card>
+    </motion.div>
   )
 }

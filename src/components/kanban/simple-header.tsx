@@ -1,12 +1,14 @@
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
+import { FilterPanel } from './filter-panel'
 
 interface SimpleHeaderProps {
   totalTasks: number
   completedTasks: number
+  availableTags?: string[]
 }
 
-export function SimpleHeader({ totalTasks, completedTasks }: SimpleHeaderProps) {
+export function SimpleHeader({ totalTasks, completedTasks, availableTags = [] }: SimpleHeaderProps) {
   const completionPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
   
   return (
@@ -28,8 +30,9 @@ export function SimpleHeader({ totalTasks, completedTasks }: SimpleHeaderProps) 
           </div>
         </div>
 
-        {/* Right section - Stats */}
+        {/* Right section - Stats and Filters */}
         <div className="flex items-center gap-4">
+          <FilterPanel availableTags={availableTags} />
           <div className="text-right">
             <div className="text-sm text-muted-foreground hidden sm:block">Progress</div>
             <div className="flex items-center gap-2">

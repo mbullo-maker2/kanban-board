@@ -1,6 +1,7 @@
 import React from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { motion } from 'framer-motion'
 import { Task } from '@/types/kanban'
 import { TaskCard } from './task-card'
 import { cn } from '@/lib/utils'
@@ -29,7 +30,7 @@ export function DraggableTaskCard({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: transition || 'transform 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   }
 
   return (
